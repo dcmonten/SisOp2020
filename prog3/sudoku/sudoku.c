@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdbool.h>
-#define NUM_THEADS 11
+#define NUM_THEADS 18
 
 
 //Estructura que se envía como parámetro
@@ -22,7 +22,7 @@ int sudoku_resuelto[9][9] = {
 	{5, 9, 1, 8, 3, 7, 4, 2, 6},
 	{9, 7, 6, 4, 2, 3, 1, 5, 8},
 	{1, 2, 8, 7, 5, 9, 3, 6, 4},
-	{1, 4, 5, 6, 8, 1, 2, 7, 9}
+	{3, 4, 5, 6, 8, 1, 2, 7, 9}
 };
 
 //declaracion de funciones
@@ -43,39 +43,43 @@ int main() {
     //recorro la matriz 9x9, para los hilos que revisan filas y columnas
     for (i=0;i<9;i++){
         parameters *dt_col = (parameters *) malloc(sizeof(parameters));	
-        parameters *dt_row = (parameters *) malloc(sizeof(parameters));	
 
         dt_col->row = 0;		
 		dt_col->column = i;
+        pthread_create(&hilos[index++],NULL,revisarColumna,dt_col);
 
-
+        parameters *dt_row = (parameters *) malloc(sizeof(parameters));	
         dt_row->row = i;		
 		dt_row->column = 0;
+        pthread_create(&hilos[index++],NULL,revisarFila,dt_row);
 
-        
-        pthread_create(&hilos[index++],NULL,revisarColumna,dt_col);
-        //pthread_create(&hilos[index++],NULL,revisarFila,dt_row);
-
-       
     }
+
+	for (i = 0; i < NUM_THEADS; i++) {
+		pthread_join(hilos[i], NULL);			// Wait for all threads to finish
+	}
+    
+	return EXIT_SUCCESS;
 
 }
 
+//valida fila
 void *revisarFila(void* param){
     parameters *params = (parameters*) param;
 	int row = params->row;
-	int col = params->column;
-        //creo una lista donde guardo valores de la columna para revisar duplicados
-    int columna[9]={0,0,0,0,0,0,0,0,0};
+    int col=params->column; 
+    //tomo la fila
+    int fila[9]={0,0,0,0,0,0,0,0,0};
     //creo columnas
     for (size_t i = 0; i < 9; i++)
     {
-        columna[i]=sudoku_resuelto[i][col];   
+        fila[i]=sudoku_resuelto[col][i];   
     }
-    int dup=duplicado(columna);
+    //busco duplicados en la fila
+    int dup=duplicado(fila);
     if (dup>0){
-        printf("Duplicado en fila %d columna %d\n", dup+1,col);
-        pthread_exit(0); 
+        printf("Numero duplicado en fila %d\n",row);
+        pthread_exit(NULL); 
     }
     else
     {
@@ -84,6 +88,7 @@ void *revisarFila(void* param){
     
 }
 
+//valida columna
 void *revisarColumna(void* param){
     parameters *params = (parameters*) param;
 	int row = params->row;
@@ -97,8 +102,8 @@ void *revisarColumna(void* param){
     }
     int dup=duplicado(columna);
     if (dup>0){
-        printf("Duplicado en fila %d columna %d\n", dup+1,col);
-        pthread_exit(0); 
+        printf("Numero duplicado en columna %d\n",col);
+        pthread_exit(NULL); 
     }
     else
     {
@@ -108,7 +113,8 @@ void *revisarColumna(void* param){
 
 
 //retorno el índice del duplicado
-int duplicado(int* lista){
+int duplicado(int* lista)
+{
     for (size_t i = 0; i < 9; i++)
     {
         if(contains(lista,i,lista[i])){

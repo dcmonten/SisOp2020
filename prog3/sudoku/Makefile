@@ -3,3 +3,4 @@ validador:
 
 clean:
 	rm -f validador
+
