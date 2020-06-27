@@ -50,7 +50,7 @@ int main() {
 
 
         dt_row->row = i;		
-		dt_col->column = 0;
+		dt_row->column = 0;
 
         
         pthread_create(&hilos[index++],NULL,revisarColumna,dt_col);
