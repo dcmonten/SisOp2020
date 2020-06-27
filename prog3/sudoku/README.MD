@@ -13,3 +13,4 @@ El ejecutable se llama validador, valida un sudoku.
 	make clean
 
 ### Comentarios de lo que hice se encuentran detallados en el código fuente
+### puede usar redo.sh para recompilar y ejecutar
