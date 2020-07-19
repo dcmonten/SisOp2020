@@ -19,7 +19,7 @@ void sjf();
 void fcfs();
 //5. Busca el índice del scheduler usando el argumento 1
 int indexSched(char* sched);
-
+//MAIN
 int main(int argc, char *argv[])
 {
     pthread_mutex_init(&mutex_io, NULL);
@@ -67,7 +67,6 @@ void printHelp()
     pthread_mutex_unlock (&mutex_io);
     return;
 }
-
 int indexSched(char* sched)
 {
     for(int i = 0; i < 3; i++)
@@ -77,7 +76,6 @@ int indexSched(char* sched)
     }
     return -1;
 }
-
 void rr(){
     printf("\nRound Robin Scheduler\n");
 }
