@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
             char *ptr;
             q = strtol(argv[3], &ptr, 10);
             if(q<=0 || q==NULL){
-                printf ("\n[ERROR] Quantum definido en argumento no es un número. Cambielo por un número y vuelva a intentar.\n");
+                printf ("\n[ERROR] Quantum definido en argumento no contiene un número. Cambielo por un número y vuelva a intentar.\n");
                 printHelp();
                 exit(EXIT_FAILURE);
             }
@@ -120,7 +120,6 @@ int indexSched(char* sched)
 void rr(long quantum){
     printf("\nRound Robin Scheduler\n");
     printf("\nQuantum: %ld\n",quantum);
-
 }
 void sjf(){
     printf("\nShortest Job First Scheduler\n");
