@@ -12,7 +12,7 @@ pthread_mutex_t mutex_io;
 //1. Imprimir ayuda
 void printHelp();
 //2. Planificador RR
-void rr();
+void rr(long quantum);
 //3. Planificador SJF
 void sjf();
 //4. Planificador FCFS
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
                 sjf();
                 break;
             case 2:
-                rr(argv[3]);
+                rr(q);
                 break;
             default:
                 printHelp();
@@ -117,8 +117,10 @@ int indexSched(char* sched)
     }
     return -1;
 }
-void rr(){
+void rr(long quantum){
     printf("\nRound Robin Scheduler\n");
+    printf("\nQuantum: %ld\n",quantum);
+
 }
 void sjf(){
     printf("\nShortest Job First Scheduler\n");
