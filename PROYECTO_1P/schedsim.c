@@ -22,7 +22,9 @@ char scheds_list[3][5] = {"fcfs","sjf","rr"}; //tipos de planificadores
 pthread_mutex_t mutex_io;
 //1. Imprimir ayuda
 void printHelp();
-//2. Planificador RR
+//2. Planificador RR y funciones auxiliares de rr
+int remainingTime(int cputime, int burst);
+void executeProcess(Process * ready, int cputime);
 void rr(long quantum);
 //3. Planificador SJF
 void sjf();
@@ -130,7 +132,37 @@ int indexSched(char* sched)
 void rr(long quantum){
     printf("\nRound Robin Scheduler\n");
     printf("\nQuantum: %ld\n",quantum);
+    //LIST_HEAD(rr_ready, _Process) rr_ready;
+    //LIST_HEAD(rr_execute, _Process) rr_execute;
+    //Process *p;
+    //LIST_INSERT_HEAD(&processes, p, pointers);
+    Process *curr;
+    int time_now=0;
+    LIST_FOREACH(curr, &processes, pointers) {
+        printf("\nBEFORE ****ID: %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);
+        executeProcess(curr,quantum);
+        printf("\nAFTER ****ID: %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst); 
+    } 
 }
+//rr aux
+int remainingTime(int cputime, int burst){
+    return burst-cputime;
+}
+
+void executeProcess(Process * ready, int cputime){
+    int rem=remainingTime(cputime,ready->burst);
+    if (rem>0){
+        ready->arrival = ready->arrival+cputime;
+        ready->burst = rem;
+    }else {
+        ready->arrival = ready->arrival+ready->burst;
+        ready->burst = 0;
+    }
+}
+
+
+
+/*SJF*/
 void sjf(){
     printf("\nShortest Job First Scheduler\n");
 }
@@ -150,13 +182,8 @@ bool fillProcessQueues(char * file_path){
         index++;
         Process *p = create_process(index,llegada,rafaga);
         LIST_INSERT_HEAD(&processes, p, pointers);
-        printf("\n[INFO] Insertando proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
-    }  
-
-    Process*pro;
-    LIST_FOREACH(pro, &processes, pointers) {
-        printf("\nID: %d, Arr: %d, Brts: %d", pro->id,pro->arrival,pro->burst);
-    }  
+        printf("\n[INFO] Se insertó el proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
+    } 
     fclose(fp);
     return true;
 }
