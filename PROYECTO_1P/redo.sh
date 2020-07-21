@@ -1,3 +1,10 @@
 make clean
 make schedsim
-./schedsim rr
+./schedsim schedtimes.dat rr 4
+#./schedsim schedtimes.dat rr as
+#./schedsim schedtimes.dat sjf skmkldañsld
+#./schedsim schedtimes.dat sjf
+#./schedsim schedtimes.dat fcfs
+
+
+

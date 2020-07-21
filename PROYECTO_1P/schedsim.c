@@ -5,6 +5,17 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include "libs/queue.h"
+
+//structs
+typedef struct _Process {
+    LIST_ENTRY(_Process) pointers;
+    int arrival;
+    int burst;
+    int id;
+} Process;
+Process *create_process(int id,int arrival,int burst);
+LIST_HEAD(process_list, _Process) processes;
 //vars
 char scheds_list[3][5] = {"fcfs","sjf","rr"}; //tipos de planificadores
 //mutex para acceso al io
@@ -47,14 +58,13 @@ int main(int argc, char *argv[])
         else{
             char *ptr;
             q = strtol(argv[3], &ptr, 10);
-            if(q<=0 || q==NULL){
+            if(q<=0){
                 printf ("\n[ERROR] Quantum definido en argumento no contiene un número. Cambielo por un número y vuelva a intentar.\n");
                 printHelp();
                 exit(EXIT_FAILURE);
             }
         }
     }
-    
     //aqui si empiezo a definir variables
     pthread_mutex_init(&mutex_io, NULL); // defino mutex para io
     char * file_path = argv[1]; // defino ruta del archivo
@@ -135,10 +145,25 @@ bool fillProcessQueues(char * file_path){
     if (fp == NULL){
         return false;
     }
+    LIST_INIT(&processes);
     while(fscanf(fp, "%d %d", &llegada, &rafaga)!= EOF){
         index++;
-        printf("\n[INFO] Leyendo línea %d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
-    }    
+        Process *p = create_process(index,llegada,rafaga);
+        LIST_INSERT_HEAD(&processes, p, pointers);
+        printf("\n[INFO] Insertando proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
+    }  
+
+    Process*pro;
+    LIST_FOREACH(pro, &processes, pointers) {
+        printf("\nID: %d, Arr: %d, Brts: %d", pro->id,pro->arrival,pro->burst);
+    }  
     fclose(fp);
     return true;
+}
+Process *create_process(int id,int arrival,int burst)
+{
+    Process *process = (Process *)malloc(sizeof(Process));
+    process->id = id;
+    process->arrival = arrival;
+    process->burst = burst;
 }

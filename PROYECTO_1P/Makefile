@@ -1,6 +1,5 @@
 schedsim:
-	gcc -o schedsim schedsim.c -pthread
-
+	gcc -I ./libs schedsim.c -o schedsim -pthread
 clean:
 	rm -f schedsim
 
