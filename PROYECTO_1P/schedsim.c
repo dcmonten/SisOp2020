@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <math.h>
 #include "libs/queue.h"
 
 //structs
@@ -27,7 +28,7 @@ typedef struct _ProcessStats {
 
 Process *create_process(int id,int arrival,int burst);
 ProcessStats *create_process_stats(int id,int turnaround,int wait);
-
+int compareProcesses(Process * p1, Process * p2);
 LIST_HEAD(process_list, _Process) processes;
 LIST_HEAD(process_stats, _ProcessStats) processes_stats;
 
@@ -45,6 +46,7 @@ int executeProcess(Process * ready, int cputime, int arrival_time);
 bool removeExecutedProcess(Process * executed);
 void runStats(int end);
 void freeStats();
+int shortestRemainingTime(Process * tmp, int arrival);
 void rr(long quantum);
 //3. Planificador SJF
 void sjf();
@@ -283,7 +285,11 @@ void sjf(){
             else
             {
                 start = time_now;
-                int adt=executeProcess(curr,curr->burst_init,time_now);
+                printf("\nPID: %d",curr->id);
+                int expected_brst=shortestRemainingTime(curr, time_now);
+                printf("\nPID: %d",curr->id);
+                int adt=executeProcess(curr,expected_brst,time_now);
+
                 time_now=time_now+adt; 
                 end=time_now;
                 burst=end-start;
@@ -305,6 +311,36 @@ void sjf(){
     }
     runStats(time_now);
 }
+int shortestRemainingTime(Process * ready, int arrival){
+    Process * ready_on_q;
+    Process * tmp = ready;
+    int diff=0;
+    LIST_FOREACH(ready_on_q, &processes, pointers) {
+        bool condition1=(ready_on_q->arrival<=arrival);
+        if(condition1)
+        {
+            diff = compareProcesses(tmp,ready_on_q);
+            
+            if(diff>0){
+                tmp=ready_on_q;
+            }else{
+                diff=0;
+            }
+        }
+    }
+    ready=tmp;
+    if(diff!=0){
+        return abs(diff);
+    }
+    else{
+        return ready->burst;
+    }
+    
+}
+int compareProcesses(Process * p1, Process * p2){
+    return p1->burst-p2->burst;
+}
+
 void fcfs(){   
     printf("\n[INFO] SCHEDULER: First Come First Serve Scheduler\n");
     int time_now=0;
