@@ -40,10 +40,11 @@ void printHelp();
 //2. Planificador RR y funciones auxiliares de rr
 int remainingTime(int cputime, int burst);
 int waitingTime(int turnar,int burst);
-int executeProcess(Process * ready, int cputime, int arrival_time);
 int turnaroundTime(int exit, int arrival);
+int executeProcess(Process * ready, int cputime, int arrival_time);
 bool removeExecutedProcess(Process * executed);
-
+void runStats(int end);
+void freeStats();
 void rr(long quantum);
 //3. Planificador SJF
 void sjf();
@@ -187,11 +188,9 @@ void rr(long quantum){
             index++;
         }
     }
-    ProcessStats *ps;
-    LIST_FOREACH(ps, &processes_stats, pointers) {
-        printf("\n id #%d turnaround: %d wait: %d\n ",ps->id,ps->turnaround,ps->wait);
-    }
-    printf("\nEnded at %d time units\n",time_now);
+    runStats(time_now);
+
+
 }
 //rr aux
 int remainingTime(int cputime, int burst){
@@ -218,6 +217,7 @@ int executeProcess(Process * ready, int cputime,int arrival_time){
     }
     return time;
 }
+
 bool removeExecutedProcess(Process * executed){
     if(executed->burst == 0){
         int tat=turnaroundTime(executed->exec_end,executed->arrival);
@@ -230,6 +230,38 @@ bool removeExecutedProcess(Process * executed){
     else return false;
 }
 
+void runStats(int end){
+    ProcessStats *ps;
+    int turnaround_sum=0;
+    int wait_sum=0;
+    float normal_turnaround_sum=0.0f;
+    int procs=0;
+    LIST_FOREACH(ps, &processes_stats, pointers) {
+        turnaround_sum=turnaround_sum+ps->turnaround;
+        wait_sum=wait_sum+ps->wait;
+        procs++;
+        float bt=(float)ps->turnaround-(float)ps->wait;
+        float nm_t=(float)ps->turnaround/bt;
+        normal_turnaround_sum=normal_turnaround_sum+nm_t;
+    }
+    float avg_tat=(float)turnaround_sum/(float)procs;
+    float avg_wt=(float)wait_sum/(float)procs;
+    float avg_tat_n=normal_turnaround_sum/(float)procs;
+    printf("\nEnded at %d time units\n",end);
+    printf("\nAverage Turnaround Time: %f time units\n",avg_tat);
+    printf("\nAverage Turnaround Time (Normalized): %f time units\n",avg_tat_n);
+    printf("\nAverage Wait Time: %f time units\n",avg_wt);
+    freeStats();
+}
+
+void freeStats(){
+    ProcessStats *node;
+    while (!LIST_EMPTY(&processes_stats)) {
+        node = LIST_FIRST(&processes_stats);
+        LIST_REMOVE(node, pointers);
+        free(node);
+    }
+}
 
 /*SJF*/
 void sjf(){
