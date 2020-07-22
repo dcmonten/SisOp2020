@@ -266,7 +266,44 @@ void freeStats(){
 
 /*SJF*/
 void sjf(){
-    printf("\nShortest Job First Scheduler\n");
+    printf("\n[INFO] SCHEDULER: Shortest Job First Scheduler Scheduler\n");
+    int time_now=0;
+    int skipped=0;
+    int index = 1;
+    Process *curr;
+    while (!LIST_EMPTY(&processes)) {
+        skipped=0;
+        Process *curr;
+        int start,end,burst,turnaround,wait;
+        LIST_FOREACH(curr, &processes, pointers) {
+            if(curr->arrival>time_now)
+            {
+                skipped++;
+            }
+            else
+            {
+                start = time_now;
+                int adt=executeProcess(curr,curr->burst_init,time_now);
+                time_now=time_now+adt; 
+                end=time_now;
+                burst=end-start;
+                turnaround=end-curr->arrival;
+                wait=waitingTime(turnaround,curr->burst_init-curr->burst);
+                printf("\n%d: runs %d-%d -> end = %d, (arr = %d), turn = %d, (burst = %d), wait = %d\n",
+                        index,start,end,end,curr->exec_start,turnaround,burst,wait
+                    );
+                index++;
+                removeExecutedProcess(curr);
+            }
+        } 
+        if (skipped>0){
+            int time=time_now;
+            time_now++;
+            printf("\n%d: runs %d-%d\n",index,time,time_now);
+            index++;
+        }
+    }
+    runStats(time_now);
 }
 void fcfs(){   
     printf("\n[INFO] SCHEDULER: First Come First Serve Scheduler\n");
