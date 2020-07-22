@@ -39,7 +39,9 @@ pthread_mutex_t mutex_io;
 void printHelp();
 //2. Planificador RR y funciones auxiliares de rr
 int remainingTime(int cputime, int burst);
+int waitingTime(int turnar,int burst);
 int executeProcess(Process * ready, int cputime, int arrival_time);
+int turnaroundTime(int exit, int arrival);
 bool removeExecutedProcess(Process * executed);
 
 void rr(long quantum);
@@ -185,6 +187,10 @@ void rr(long quantum){
             index++;
         }
     }
+    ProcessStats *ps;
+    LIST_FOREACH(ps, &processes_stats, pointers) {
+        printf("\n id #%d turnaround: %d wait: %d\n ",ps->id,ps->turnaround,ps->wait);
+    }
     printf("\nEnded at %d time units\n",time_now);
 }
 //rr aux
@@ -216,7 +222,8 @@ bool removeExecutedProcess(Process * executed){
     if(executed->burst == 0){
         int tat=turnaroundTime(executed->exec_end,executed->arrival);
         int wt=waitingTime(tat,executed->burst_init);
-        printf("\n id #%d turnaround: %d wait: %d",executed->id,tat,wt);
+        ProcessStats * ps = create_process_stats(executed->id,tat,wt);
+        LIST_INSERT_HEAD(&processes_stats, ps, pointers);
         LIST_REMOVE(executed, pointers);
         return true; 
     }
@@ -240,6 +247,7 @@ bool fillProcessQueues(char * file_path){
         return false;
     }
     LIST_INIT(&processes);
+    LIST_INIT(&processes_stats);
     Process * prev;//temporal para guardar el elemento anterior
     while(fscanf(fp, "%d %d", &llegada, &rafaga)!= EOF){
         index++;
