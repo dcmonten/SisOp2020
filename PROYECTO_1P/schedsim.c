@@ -11,6 +11,8 @@
 typedef struct _Process {
     LIST_ENTRY(_Process) pointers;
     int arrival;
+    int exec_start;
+    int exec_end;
     int burst;
     int id;
 } Process;
@@ -24,7 +26,7 @@ pthread_mutex_t mutex_io;
 void printHelp();
 //2. Planificador RR y funciones auxiliares de rr
 int remainingTime(int cputime, int burst);
-int executeProcess(Process * ready, int cputime);
+int executeProcess(Process * ready, int cputime, int arrival_time);
 bool removeExecutedProcess(Process * executed);
 
 void rr(long quantum);
@@ -132,26 +134,48 @@ int indexSched(char* sched)
     return -1;
 }
 void rr(long quantum){
-    printf("\nRound Robin Scheduler\n");
-    printf("\nQuantum: %ld\n",quantum);
-    //LIST_HEAD(rr_ready, _Process) rr_ready;
-    //LIST_HEAD(rr_execute, _Process) rr_execute;
-    //Process *p;
-    //LIST_INSERT_HEAD(&processes, p, pointers);
-    
+    printf("\n[INFO] SCHEDULER: Round Robin Scheduler\n");
+    printf("\n[INFO] Quantum: %ld\n",quantum);
     int time_now=0;
+    int skipped=0;
+    int index = 1;
     Process *curr;
     while (!LIST_EMPTY(&processes)) {
+        skipped=0;
         Process *curr;
+        int start,end,burst,wait;
         LIST_FOREACH(curr, &processes, pointers) {
-            printf("\n[INFO] EXECUTE # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
-            time_now=time_now+executeProcess(curr,quantum); 
-            if(removeExecutedProcess(curr)){
-                printf("\n[INFO] TERMINATE # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
-            }else{
-                printf("\n[INFO] TO READY # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
+            if(curr->arrival>time_now)
+            {
+                skipped++;
+            }
+            else
+            {
+                start = time_now;
+                int adt=executeProcess(curr,quantum,time_now);
+                time_now=time_now+adt; 
+                end=time_now;
+                burst=end-start;
+                wait=start-curr->arrival;
+                printf("\n%d: runs %d-%d -> end = %d, (arr = %d), turn = %d, (burst = %d), wait = %d\n",
+                        index,start,end,end,curr->exec_start,burst+wait,burst,wait
+                    );
+                index++;
+                removeExecutedProcess(curr);
+                /*
+                if(removeExecutedProcess(curr)){
+                    printf("\n[INFO] TERMINATE # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
+                }else{
+                    printf("\n[INFO] TO READY # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
+                }*/
             }
         } 
+        if (skipped>0){
+            int time=time_now;
+            time_now++;
+            printf("\n%d: runs %d-%d\n",index,time,time_now);
+            index++;
+        }
     }
     printf("\nEnded at %d time units\n",time_now);
 }
@@ -159,17 +183,23 @@ void rr(long quantum){
 int remainingTime(int cputime, int burst){
     return burst-cputime;
 }
-
-int executeProcess(Process * ready, int cputime){
+int turnaroundTime(int exit, int arrival){
+    return exit - arrival;
+}
+int waitingTime(int turnar,int burst){
+    return turnar - burst;
+}
+int executeProcess(Process * ready, int cputime,int arrival_time){
     int rem=remainingTime(cputime,ready->burst);
     int time=0;
+    ready->exec_start = arrival_time;
     if (rem>0){
-        ready->arrival = ready->arrival+cputime;
+        ready->exec_end = arrival_time+cputime;
         ready->burst = rem;
-        time=time+cputime;
+        time=cputime;
     }else {
-        time=time+ready->burst;
-        ready->arrival = ready->arrival+ready->burst;
+        ready->exec_end = arrival_time+ready->burst;
+        time=ready->burst;
         ready->burst = 0;
     }
     return time;
@@ -210,7 +240,7 @@ bool fillProcessQueues(char * file_path){
             LIST_INSERT_AFTER(prev, p, pointers);
         }
         prev=p;
-        printf("\n[INFO] Leyendo procesos desde archivo... Proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
+        //printf("\n[INFO] Leyendo procesos desde archivo... Proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
     } 
     fclose(fp);
     return true;
@@ -219,6 +249,8 @@ Process *create_process(int id,int arrival,int burst)
 {
     Process *process = (Process *)malloc(sizeof(Process));
     process->id = id;
+    process->exec_start = 0;
+    process->exec_end = 0;
     process->arrival = arrival;
     process->burst = burst;
 }
