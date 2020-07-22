@@ -24,7 +24,9 @@ pthread_mutex_t mutex_io;
 void printHelp();
 //2. Planificador RR y funciones auxiliares de rr
 int remainingTime(int cputime, int burst);
-void executeProcess(Process * ready, int cputime);
+int executeProcess(Process * ready, int cputime);
+bool removeExecutedProcess(Process * executed);
+
 void rr(long quantum);
 //3. Planificador SJF
 void sjf();
@@ -136,30 +138,49 @@ void rr(long quantum){
     //LIST_HEAD(rr_execute, _Process) rr_execute;
     //Process *p;
     //LIST_INSERT_HEAD(&processes, p, pointers);
-    Process *curr;
+    
     int time_now=0;
-    LIST_FOREACH(curr, &processes, pointers) {
-        printf("\nBEFORE ****ID: %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);
-        executeProcess(curr,quantum);
-        printf("\nAFTER ****ID: %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst); 
-    } 
+    Process *curr;
+    while (!LIST_EMPTY(&processes)) {
+        Process *curr;
+        LIST_FOREACH(curr, &processes, pointers) {
+            printf("\n[INFO] EXECUTE # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
+            time_now=time_now+executeProcess(curr,quantum); 
+            if(removeExecutedProcess(curr)){
+                printf("\n[INFO] TERMINATE # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
+            }else{
+                printf("\n[INFO] TO READY # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
+            }
+        } 
+    }
+    printf("\nEnded at %d time units\n",time_now);
 }
 //rr aux
 int remainingTime(int cputime, int burst){
     return burst-cputime;
 }
 
-void executeProcess(Process * ready, int cputime){
+int executeProcess(Process * ready, int cputime){
     int rem=remainingTime(cputime,ready->burst);
+    int time=0;
     if (rem>0){
         ready->arrival = ready->arrival+cputime;
         ready->burst = rem;
+        time=time+cputime;
     }else {
+        time=time+ready->burst;
         ready->arrival = ready->arrival+ready->burst;
         ready->burst = 0;
     }
+    return time;
 }
-
+bool removeExecutedProcess(Process * executed){
+    if(executed->burst == 0){
+        LIST_REMOVE(executed, pointers);
+        return true; 
+    }
+    else return false;
+}
 
 
 /*SJF*/
@@ -178,11 +199,18 @@ bool fillProcessQueues(char * file_path){
         return false;
     }
     LIST_INIT(&processes);
+    Process * prev;//temporal para guardar el elemento anterior
     while(fscanf(fp, "%d %d", &llegada, &rafaga)!= EOF){
         index++;
         Process *p = create_process(index,llegada,rafaga);
-        LIST_INSERT_HEAD(&processes, p, pointers);
-        printf("\n[INFO] Se insertó el proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
+        if(index==1){
+            LIST_INSERT_HEAD(&processes, p, pointers);
+        }
+        else {
+            LIST_INSERT_AFTER(prev, p, pointers);
+        }
+        prev=p;
+        printf("\n[INFO] Leyendo procesos desde archivo... Proceso #%d -- Llegada: %d Ráfaga: %d\n",index,llegada,rafaga); //mensaje informativo
     } 
     fclose(fp);
     return true;
