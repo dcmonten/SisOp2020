@@ -13,11 +13,24 @@ typedef struct _Process {
     int arrival;
     int exec_start;
     int exec_end;
+    int burst_init;
     int burst;
     int id;
 } Process;
+
+typedef struct _ProcessStats {
+    LIST_ENTRY(_ProcessStats) pointers;
+    int turnaround;
+    int wait;
+    int id;
+} ProcessStats;
+
 Process *create_process(int id,int arrival,int burst);
+ProcessStats *create_process_stats(int id,int turnaround,int wait);
+
 LIST_HEAD(process_list, _Process) processes;
+LIST_HEAD(process_stats, _ProcessStats) processes_stats;
+
 //vars
 char scheds_list[3][5] = {"fcfs","sjf","rr"}; //tipos de planificadores
 //mutex para acceso al io
@@ -143,7 +156,7 @@ void rr(long quantum){
     while (!LIST_EMPTY(&processes)) {
         skipped=0;
         Process *curr;
-        int start,end,burst,wait;
+        int start,end,burst,turnaround,wait;
         LIST_FOREACH(curr, &processes, pointers) {
             if(curr->arrival>time_now)
             {
@@ -156,18 +169,13 @@ void rr(long quantum){
                 time_now=time_now+adt; 
                 end=time_now;
                 burst=end-start;
-                wait=start-curr->arrival;
+                turnaround=end-curr->arrival;
+                wait=waitingTime(turnaround,curr->burst_init-curr->burst);
                 printf("\n%d: runs %d-%d -> end = %d, (arr = %d), turn = %d, (burst = %d), wait = %d\n",
-                        index,start,end,end,curr->exec_start,burst+wait,burst,wait
+                        index,start,end,end,curr->exec_start,turnaround,burst,wait
                     );
                 index++;
                 removeExecutedProcess(curr);
-                /*
-                if(removeExecutedProcess(curr)){
-                    printf("\n[INFO] TERMINATE # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
-                }else{
-                    printf("\n[INFO] TO READY # %d, Arr: %d, Brts: %d\n", curr->id,curr->arrival,curr->burst);  
-                }*/
             }
         } 
         if (skipped>0){
@@ -206,6 +214,9 @@ int executeProcess(Process * ready, int cputime,int arrival_time){
 }
 bool removeExecutedProcess(Process * executed){
     if(executed->burst == 0){
+        int tat=turnaroundTime(executed->exec_end,executed->arrival);
+        int wt=waitingTime(tat,executed->burst_init);
+        printf("\n id #%d turnaround: %d wait: %d",executed->id,tat,wt);
         LIST_REMOVE(executed, pointers);
         return true; 
     }
@@ -253,4 +264,12 @@ Process *create_process(int id,int arrival,int burst)
     process->exec_end = 0;
     process->arrival = arrival;
     process->burst = burst;
+    process->burst_init = burst;
+}
+
+ProcessStats *create_process_stats(int id,int turnaround,int wait){
+    ProcessStats *process_stats = (ProcessStats *)malloc(sizeof(ProcessStats));
+    process_stats->id = id;
+    process_stats->turnaround = turnaround;
+    process_stats->wait = wait;
 }
