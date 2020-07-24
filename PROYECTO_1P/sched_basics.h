@@ -26,21 +26,23 @@ typedef struct _ProcessStats {
 
 typedef struct _FileStats {
     LIST_ENTRY(_FileStats) pointers;
+    int id;
     int burst;
-    float fcfs;
-    float sjf;
-    float rr1;
-    float rr4;
+    float wait;
+    float turnaround;
+    float norm_turnaround;
+    int procs;
 } FileStats;
 
 
 //LISTAS ENLAZADAS
-LIST_HEAD(burst_list, _Burst) brsts;
 LIST_HEAD(process_list, _Process) processes;
 LIST_HEAD(process_stats, _ProcessStats) processes_stats;
-LIST_HEAD(tat_list, _FileStats) ta_stats;
-LIST_HEAD(tatn_list, _FileStats) tan_stats;
-LIST_HEAD(w_list, _FileStats) w_stats;
+LIST_HEAD(fcfs_list, _FileStats) fcfs_f;
+LIST_HEAD(sjf_list, _FileStats) sjf_f;
+LIST_HEAD(rr1_list, _FileStats) rr1_f;
+LIST_HEAD(rr4_list, _FileStats) rr4_f;
+
 
 //INDEXACIÓN DE SCHEDULERS
 int indexSched(char* sched);
@@ -53,7 +55,7 @@ int burst(int turnar, int wait);
 Process *create_process(int id,int arrival,int burst);
 Process * shortestJob(Process * ready,int arrival);
 ProcessStats *create_process_stats(int id,int turnaround,int wait);
-FileStats *create_file_stats(int burst);
+FileStats *create_file_stats(int id,int burst, float wait,float turnaround,float norm_turnaround);
 
 
 //AUXILIARES DE PROCESOS
@@ -65,7 +67,8 @@ int sjfNextStop(Process * ready,int arrival);
 bool fillProcessQueues(char * file_path);
 
 //ESTADÍSTICAS
-
+void runStatsSilentFCFS();
+void printFileStatsFCFS();
 void runStats(int end);
 void freeStats();
 //SCHEDULERS

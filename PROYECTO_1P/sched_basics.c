@@ -39,13 +39,14 @@ ProcessStats *create_process_stats(int id,int turnaround,int wait){
     process_stats->wait = wait;
 }
 
-FileStats *create_file_stats(int burst){
+FileStats *create_file_stats(int id,int burst, float wait,float turnaround,float norm_turnaround){
     FileStats *fs = (FileStats *)malloc(sizeof(FileStats));
-    fs->burst = burst; 
-    fs->fcfs = 0;
-    fs->sjf = 0;
-    fs->rr1 =0;
-    fs->rr4 =0;
+    fs->id=id;
+    fs->burst=burst;
+    fs->wait=wait;
+    fs->turnaround=turnaround;
+    fs->norm_turnaround=norm_turnaround;
+    fs->procs=0;
 }
 //ROUND ROBIN
 void rr(long quantum){
@@ -292,6 +293,7 @@ void fcfs_silent(){
             index++;
         }
     }
+    runStatsSilentFCFS();
 }
 bool fillProcessQueues(char * file_path){
     int llegada,rafaga;//variables temporales para almacenar los digitos del archivo cuando se lea linea por linea
@@ -346,12 +348,51 @@ void runStats(int end){
     printf("\nAverage Wait Time: %.2f time units\n",avg_wt);
     freeStats();
 }
+
+void runStatsSilentFCFS(){
+    LIST_INIT(&fcfs_f);
+    ProcessStats *ps;
+    LIST_FOREACH(ps, &processes_stats, pointers) {
+        
+        int bs = burst(ps->turnaround,ps->wait);
+        float nm_t=(float)ps->turnaround/bs;
+        FileStats *fex;
+        if(!LIST_EMPTY(&fcfs_f)){
+            LIST_FOREACH(fex, &fcfs_f, pointers) {
+                if (fex->burst == bs){
+                    fex->turnaround = fex->turnaround+ps->turnaround;
+                    fex->wait = fex->wait+ps->wait;
+                    fex->norm_turnaround = fex->norm_turnaround+nm_t;
+                    fex->procs++;
+                }
+                else{
+                    fex = create_file_stats(0,bs,ps->wait,ps->turnaround,nm_t);
+                    fex->procs++;
+                    LIST_INSERT_HEAD(&fcfs_f, fex, pointers);
+                }
+            }
+        }else{
+            
+            printf("\nexec");
+            FileStats *fex = create_file_stats(0,bs,ps->wait,ps->turnaround,nm_t);
+            fex->procs++;
+            LIST_INSERT_HEAD(&fcfs_f, fex, pointers);
+        }
+    }
+    printFileStatsFCFS();
+}
 void freeStats(){
     ProcessStats *node;
     while (!LIST_EMPTY(&processes_stats)) {
         node = LIST_FIRST(&processes_stats);
         LIST_REMOVE(node, pointers);
         free(node);
+    }
+}
+void printFileStatsFCFS(){
+    FileStats *fex;
+    LIST_FOREACH(fex, &fcfs_f, pointers) {
+        printf ("\n%d %.2f %.2f %.2f %d\n",fex->burst,fex->turnaround,fex->wait,fex->norm_turnaround,fex->procs);
     }
 }
 
