@@ -240,9 +240,9 @@ void runStats(int end){
     float avg_wt=(float)wait_sum/(float)procs;
     float avg_tat_n=normal_turnaround_sum/(float)procs;
     printf("\nEnded at %d time units\n",end);
-    printf("\nAverage Turnaround Time: %f time units\n",avg_tat);
-    printf("\nAverage Turnaround Time (Normalized): %f time units\n",avg_tat_n);
-    printf("\nAverage Wait Time: %f time units\n",avg_wt);
+    printf("\nAverage Turnaround Time: %.2f time units\n",avg_tat);
+    printf("\nAverage Turnaround Time (Normalized): %.2f time units\n",avg_tat_n);
+    printf("\nAverage Wait Time: %.2f time units\n",avg_wt);
     freeStats();
 }
 
