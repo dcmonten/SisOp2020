@@ -11,7 +11,10 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     char * file_path = argv[1]; // defino ruta del archivo
-
+    LIST_INIT(&ta_stats);
+    LIST_INIT(&tan_stats);
+    LIST_INIT(&w_stats);
+    LIST_INIT(&brsts);
     for (int i = 0; i < 4; i++)
     {
         if(fillProcessQueues(file_path)){

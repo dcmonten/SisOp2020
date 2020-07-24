@@ -38,6 +38,15 @@ ProcessStats *create_process_stats(int id,int turnaround,int wait){
     process_stats->turnaround = turnaround;
     process_stats->wait = wait;
 }
+
+FileStats *create_file_stats(int burst){
+    FileStats *fs = (FileStats *)malloc(sizeof(FileStats));
+    fs->burst = burst; 
+    fs->fcfs = 0;
+    fs->sjf = 0;
+    fs->rr1 =0;
+    fs->rr4 =0;
+}
 //ROUND ROBIN
 void rr(long quantum){
 
@@ -314,29 +323,6 @@ bool fillProcessQueues(char * file_path){
 
 /***Stats*****/
 
-void saveStatsPerBurst(){
-    ProcessStats *ps;
-    int turnaround_sum=0;
-    int wait_sum=0;
-    float normal_turnaround_sum=0.0f;
-    int procs=0;
-    LIST_FOREACH(ps, &processes_stats, pointers) {
-        turnaround_sum=turnaround_sum+ps->turnaround;
-        wait_sum=wait_sum+ps->wait;
-        procs++;
-        float bt=(float)ps->turnaround-(float)ps->wait;
-        float nm_t=(float)ps->turnaround/bt;
-        normal_turnaround_sum=normal_turnaround_sum+nm_t;
-    }
-    float avg_tat=(float)turnaround_sum/(float)procs;
-    float avg_wt=(float)wait_sum/(float)procs;
-    float avg_tat_n=normal_turnaround_sum/(float)procs;
-
-    printf("\nAverage Turnaround Time: %.2f time units\n",avg_tat);
-    printf("\nAverage Turnaround Time (Normalized): %.2f time units\n",avg_tat_n);
-    printf("\nAverage Wait Time: %.2f time units\n",avg_wt);
-    freeStats();
-}
 void runStats(int end){
     ProcessStats *ps;
     int turnaround_sum=0;
@@ -368,3 +354,4 @@ void freeStats(){
         free(node);
     }
 }
+
