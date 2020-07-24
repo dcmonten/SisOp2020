@@ -47,8 +47,6 @@ bool removeExecutedProcess(Process * executed);
 void runStats(int end);
 void freeStats();
 int sjfNextStop(Process * tmp, int arrival);
-bool removeExecutedProcessByID(Process * executed);
-void removeByID(int id);
 Process * shortestJob(Process * ready,int arrival);
 void rr(long quantum);
 //3. Planificador SJF
@@ -234,28 +232,6 @@ bool removeExecutedProcess(Process * executed){
         return true; 
     }
     else return false;
-}
-
-bool removeExecutedProcessByID(Process * executed){
-    if(executed->burst == 0){
-        int tat=turnaroundTime(executed->exec_end,executed->arrival);
-        int wt=waitingTime(tat,executed->burst_init);
-        ProcessStats * ps = create_process_stats(executed->id,tat,wt);
-        LIST_INSERT_HEAD(&processes_stats, ps, pointers);
-        removeByID(executed->id);
-        return true; 
-    }
-    else return false;
-}
-
-void removeByID(int id){
-    Process *ps;
-    LIST_FOREACH(ps, &processes_stats, pointers) {
-        if(ps->id==id){
-            LIST_REMOVE(ps, pointers);
-            free(ps);
-        }
-    }
 }
 
 void runStats(int end){
