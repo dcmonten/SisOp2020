@@ -260,7 +260,7 @@ void fcfs(){
     runStats(time_now);
 }
 void fcfs_silent(){   
-    printf("\n[INFO] SCHEDULER: First Come First Serve Scheduler\n");
+    printf("\n[INFO] Processing First Come First Serve Scheduler\n");
     int time_now=0;
     int index = 1;
     while (!LIST_EMPTY(&processes)) {

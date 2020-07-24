@@ -18,13 +18,13 @@ int main(int argc, char *argv[])
             switch (i)
             {
             case 0:
-                fcfs();
+                fcfs_silent();
                 break;
             case 1:
-                sjf();
+                sjf_silent();
                 break;
             case 2:
-                rr(1);
+                rr_silent(1);
                 break;
             case 3: 
                 rr_silent(4);
