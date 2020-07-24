@@ -46,7 +46,10 @@ int executeProcess(Process * ready, int cputime, int arrival_time);
 bool removeExecutedProcess(Process * executed);
 void runStats(int end);
 void freeStats();
-int shortestRemainingTime(Process * tmp, int arrival);
+int sjfNextStop(Process * tmp, int arrival);
+bool removeExecutedProcessByID(Process * executed);
+void removeByID(int id);
+Process * shortestJob(Process * ready,int arrival);
 void rr(long quantum);
 //3. Planificador SJF
 void sjf();
@@ -233,6 +236,28 @@ bool removeExecutedProcess(Process * executed){
     else return false;
 }
 
+bool removeExecutedProcessByID(Process * executed){
+    if(executed->burst == 0){
+        int tat=turnaroundTime(executed->exec_end,executed->arrival);
+        int wt=waitingTime(tat,executed->burst_init);
+        ProcessStats * ps = create_process_stats(executed->id,tat,wt);
+        LIST_INSERT_HEAD(&processes_stats, ps, pointers);
+        removeByID(executed->id);
+        return true; 
+    }
+    else return false;
+}
+
+void removeByID(int id){
+    Process *ps;
+    LIST_FOREACH(ps, &processes_stats, pointers) {
+        if(ps->id==id){
+            LIST_REMOVE(ps, pointers);
+            free(ps);
+        }
+    }
+}
+
 void runStats(int end){
     ProcessStats *ps;
     int turnaround_sum=0;
@@ -272,74 +297,60 @@ void sjf(){
     int time_now=0;
     int skipped=0;
     int index = 1;
-    Process *curr;
     while (!LIST_EMPTY(&processes)) {
-        skipped=0;
-        Process *curr;
+        Process *curr = LIST_FIRST(&processes);
         int start,end,burst,turnaround,wait;
-        LIST_FOREACH(curr, &processes, pointers) {
-            if(curr->arrival>time_now)
-            {
-                skipped++;
-            }
-            else
-            {
-                start = time_now;
-                printf("\nPID: %d",curr->id);
-                int expected_brst=shortestRemainingTime(curr, time_now);
-                printf("\nPID: %d",curr->id);
-                int adt=executeProcess(curr,expected_brst,time_now);
-
-                time_now=time_now+adt; 
-                end=time_now;
-                burst=end-start;
-                turnaround=end-curr->arrival;
-                wait=waitingTime(turnaround,curr->burst_init-curr->burst);
-                printf("\n%d: runs %d-%d -> end = %d, (arr = %d), turn = %d, (burst = %d), wait = %d\n",
-                        index,start,end,end,curr->exec_start,turnaround,burst,wait
-                    );
-                index++;
-                removeExecutedProcess(curr);
-            }
-        } 
-        if (skipped>0){
+        start = time_now;
+        curr = shortestJob(curr,start); 
+        int step=sjfNextStop(curr, start);
+        int expected_brst=(step<curr->burst)?step:curr->burst;
+        if (curr->arrival<=time_now){
+            int adt=executeProcess(curr,expected_brst,time_now);
+            time_now=time_now+adt; 
+            end=time_now;
+            burst=end-start;
+            turnaround=end-curr->arrival;
+            wait=waitingTime(turnaround,curr->burst_init-curr->burst);
+            printf("\n%d: runs %d-%d -> end = %d, (arr = %d), turn = %d, (burst = %d), wait = %d\n",
+                    index,start,end,end,curr->exec_start,turnaround,burst,wait
+                );
+            
+            removeExecutedProcess(curr);
+        }else{
             int time=time_now;
             time_now++;
             printf("\n%d: runs %d-%d\n",index,time,time_now);
-            index++;
         }
+        index++;
+        
     }
     runStats(time_now);
 }
-int shortestRemainingTime(Process * ready, int arrival){
+int sjfNextStop(Process * ready,int arrival){
+    Process * ready_on_q;
+    int next_arrival=10000;
+    LIST_FOREACH(ready_on_q, &processes, pointers) {
+        if(ready_on_q->arrival>arrival)
+            next_arrival=(ready_on_q->arrival<next_arrival)?ready_on_q->arrival:next_arrival;
+    }
+    return (next_arrival<ready->burst) ? next_arrival:ready->burst;
+}
+Process * shortestJob(Process * ready,int arrival){
     Process * ready_on_q;
     Process * tmp = ready;
-    int diff=0;
     LIST_FOREACH(ready_on_q, &processes, pointers) {
-        bool condition1=(ready_on_q->arrival<=arrival);
-        if(condition1)
+        if(ready_on_q->arrival<=arrival)
         {
-            diff = compareProcesses(tmp,ready_on_q);
-            
-            if(diff>0){
+            int b1=tmp->burst;
+            int b2=ready_on_q->burst;
+            if(b1>b2){
                 tmp=ready_on_q;
-            }else{
-                diff=0;
             }
         }
     }
-    ready=tmp;
-    if(diff!=0){
-        return abs(diff);
-    }
-    else{
-        return ready->burst;
-    }
-    
+    return tmp;
 }
-int compareProcesses(Process * p1, Process * p2){
-    return p1->burst-p2->burst;
-}
+
 
 void fcfs(){   
     printf("\n[INFO] SCHEDULER: First Come First Serve Scheduler\n");
