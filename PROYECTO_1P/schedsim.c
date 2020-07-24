@@ -34,8 +34,6 @@ LIST_HEAD(process_stats, _ProcessStats) processes_stats;
 
 //vars
 char scheds_list[3][5] = {"fcfs","sjf","rr"}; //tipos de planificadores
-//mutex para acceso al io
-pthread_mutex_t mutex_io;
 //1. Imprimir ayuda
 void printHelp();
 //2. Planificador RR y funciones auxiliares de rr
@@ -90,8 +88,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-    //aqui si empiezo a definir variables
-    pthread_mutex_init(&mutex_io, NULL); // defino mutex para io
     char * file_path = argv[1]; // defino ruta del archivo
     int scheduler = indexSched(argv[2]); //tipo de sched//busco el índice del planificador
     if(fillProcessQueues(file_path)){
@@ -126,7 +122,6 @@ int main(int argc, char *argv[])
 
 void printHelp()
 {
-    pthread_mutex_lock (&mutex_io);
     printf("\n ************************************************************************************\n");
     printf("\n Simulador de planificador de CPU");
     printf("\n Autor: Daniela Montenegro");
@@ -140,7 +135,6 @@ void printHelp()
     printf("\n Round Robin: ");
     printf("\n ./schedsim schedtimes.dat rr [quantum:Integer]\n");
     printf("\n ************************************************************************************\n");    
-    pthread_mutex_unlock (&mutex_io);
     return;
 }
 int indexSched(char* sched)
@@ -157,19 +151,13 @@ void rr(long quantum){
     printf("\n[INFO] SCHEDULER: Round Robin Scheduler\n");
     printf("\n[INFO] Quantum: %ld\n",quantum);
     int time_now=0;
-    int skipped=0;
     int index = 1;
-    Process *curr;
     while (!LIST_EMPTY(&processes)) {
-        skipped=0;
+        int time_init = 0;
         Process *curr;
         int start,end,burst,turnaround,wait;
         LIST_FOREACH(curr, &processes, pointers) {
-            if(curr->arrival>time_now)
-            {
-                skipped++;
-            }
-            else
+            if(curr->arrival<=time_now)
             {
                 start = time_now;
                 int adt=executeProcess(curr,quantum,time_now);
@@ -182,10 +170,12 @@ void rr(long quantum){
                         index,start,end,end,curr->exec_start,turnaround,burst,wait
                     );
                 index++;
+                time_init=end;
                 removeExecutedProcess(curr);
             }
+            else continue;
         } 
-        if (skipped>0){
+        if (time_init==0){
             int time=time_now;
             time_now++;
             printf("\n%d: runs %d-%d\n",index,time,time_now);
@@ -331,19 +321,13 @@ Process * shortestJob(Process * ready,int arrival){
 void fcfs(){   
     printf("\n[INFO] SCHEDULER: First Come First Serve Scheduler\n");
     int time_now=0;
-    int skipped=0;
     int index = 1;
-    Process *curr;
     while (!LIST_EMPTY(&processes)) {
-        skipped=0;
+        int time_init=0;
         Process *curr;
         int start,end,burst,turnaround,wait;
         LIST_FOREACH(curr, &processes, pointers) {
-            if(curr->arrival>time_now)
-            {
-                skipped++;
-            }
-            else
+            if(curr->arrival<=time_now)
             {
                 start = time_now;
                 int adt=executeProcess(curr,curr->burst_init,time_now);
@@ -355,11 +339,12 @@ void fcfs(){
                 printf("\n%d: runs %d-%d -> end = %d, (arr = %d), turn = %d, (burst = %d), wait = %d\n",
                         index,start,end,end,curr->exec_start,turnaround,burst,wait
                     );
+                time_init=end;
                 index++;
                 removeExecutedProcess(curr);
             }
         } 
-        if (skipped>0){
+        if (time_init==0){
             int time=time_now;
             time_now++;
             printf("\n%d: runs %d-%d\n",index,time,time_now);
