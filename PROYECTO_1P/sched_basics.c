@@ -526,7 +526,15 @@ void runStatsSilentRR4(){
 
 
 void listsToFiles(){
-    
+    FILE *schedtur;
+    FILE *schedntur;
+    FILE *schedw;
+
+    schedtur  = fopen ("schedturns.dat", "w");
+    schedntur  = fopen ("schednturns.dat", "w");
+    schedw  = fopen ("schedwaits.dat", "w");
+
+
     int bs_min = INT_MAX;
     int bs_max = 0;
     FileStats *fs;
@@ -581,10 +589,17 @@ void listsToFiles(){
                 index++;
             }           
         }
-        if(index==4) printf ("\n%d %.2f %.2f %.2f %.2f\n",burst,turnar_f,turnar_s,turnar_r1,turnar_r4);
+        if(index==4) {
+            fprintf(schedtur,"\n%d %.2f %.2f %.2f %.2f\n",burst,turnar_f,turnar_s,turnar_r1,turnar_r4);
+            fprintf (schedw,"\n%d %.2f %.2f %.2f %.2f\n",burst,wt_f,wt_s,wt_r1,wt_r4);
+            fprintf (schedntur,"\n%d %.2f %.2f %.2f %.2f\n",burst,nturnar_f,nturnar_s,nturnar_r1,nturnar_r4);
+        }
+
 
     }
-        
+     fclose (schedtur);  
+     fclose (schedntur);   
+     fclose (schedw);   
     }
 
 
