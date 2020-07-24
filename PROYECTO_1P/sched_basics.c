@@ -170,7 +170,7 @@ void sjf_silent(){
         }
         index++;
     }
-   
+    runStatsSilentSJF();
 }
 /*SJF*/
 void sjf(){
@@ -351,36 +351,243 @@ void runStats(int end){
 
 void runStatsSilentFCFS(){
     LIST_INIT(&fcfs_f);
-    ProcessStats *ps;
-    LIST_FOREACH(ps, &processes_stats, pointers) {
-        
-        int bs = burst(ps->turnaround,ps->wait);
-        float nm_t=(float)ps->turnaround/bs;
-        FileStats *fex;
-        if(!LIST_EMPTY(&fcfs_f)){
-            LIST_FOREACH(fex, &fcfs_f, pointers) {
-                if (fex->burst == bs){
-                    fex->turnaround = fex->turnaround+ps->turnaround;
-                    fex->wait = fex->wait+ps->wait;
-                    fex->norm_turnaround = fex->norm_turnaround+nm_t;
-                    fex->procs++;
-                }
-                else{
-                    fex = create_file_stats(0,bs,ps->wait,ps->turnaround,nm_t);
-                    fex->procs++;
-                    LIST_INSERT_HEAD(&fcfs_f, fex, pointers);
-                }
-            }
-        }else{
-            
-            printf("\nexec");
-            FileStats *fex = create_file_stats(0,bs,ps->wait,ps->turnaround,nm_t);
-            fex->procs++;
-            LIST_INSERT_HEAD(&fcfs_f, fex, pointers);
+    int bs_min = INT_MAX;
+    int bs_max = 0;
+    ProcessStats *pst;
+    //obtengo el burst minimo y el burst maximo
+    LIST_FOREACH(pst, &processes_stats, pointers) {
+        int bs=burst(pst->turnaround,pst->wait);
+        if (bs>bs_max){
+            bs_max=bs;
+        }
+        if (bs<bs_min){
+            bs_min=bs;
         }
     }
-    printFileStatsFCFS();
+    FileStats *fa;
+    //por cada valor de burst
+    for (int i = bs_min; i <= bs_max; i++)
+    {
+        fa = create_file_stats(0,i,0.0f,0.0f,0.0f);
+        ProcessStats *ps;
+        //busco en toda la lista de procesos
+        LIST_FOREACH(ps, &processes_stats, pointers) {
+            int bs=burst(ps->turnaround,ps->wait);
+            if(bs==i){
+                //acumulo en wait y turnaround
+                fa->wait=fa->wait+(float)ps->wait;
+                fa->turnaround=fa->turnaround+(float)ps->turnaround;
+                fa->norm_turnaround=(float)ps->turnaround/(float)bs;
+                fa->procs=fa->procs+1;
+            }else continue;
+        }
+        if(fa->procs>0){
+            //la acumulaci{on la cambio antes de insertar}
+            fa->wait=fa->wait/(float)fa->procs;
+            fa->turnaround=fa->turnaround/(float)fa->procs;
+            LIST_INSERT_HEAD(&fcfs_f, fa, pointers);
+        }  
+        else continue;
+    }
 }
+
+void runStatsSilentSJF(){
+    LIST_INIT(&sjf_f);
+    int bs_min = INT_MAX;
+    int bs_max = 0;
+    ProcessStats *pst;
+    //obtengo el burst minimo y el burst maximo
+    LIST_FOREACH(pst, &processes_stats, pointers) {
+        int bs=burst(pst->turnaround,pst->wait);
+        if (bs>bs_max){
+            bs_max=bs;
+        }
+        if (bs<bs_min){
+            bs_min=bs;
+        }
+    }
+    FileStats *fa;
+    //por cada valor de burst
+    for (int i = bs_min; i <= bs_max; i++)
+    {
+        fa = create_file_stats(0,i,0.0f,0.0f,0.0f);
+        ProcessStats *ps;
+        //busco en toda la lista de procesos
+        LIST_FOREACH(ps, &processes_stats, pointers) {
+            int bs=burst(ps->turnaround,ps->wait);
+            if(bs==i){
+                //acumulo en wait y turnaround
+                fa->wait=fa->wait+(float)ps->wait;
+                fa->turnaround=fa->turnaround+(float)ps->turnaround;
+                fa->norm_turnaround=(float)ps->turnaround/(float)bs;
+                fa->procs=fa->procs+1;
+            }else continue;
+        }
+        if(fa->procs>0){
+            //la acumulaci{on la cambio antes de insertar}
+            fa->wait=fa->wait/(float)fa->procs;
+            fa->turnaround=fa->turnaround/(float)fa->procs;
+            LIST_INSERT_HEAD(&sjf_f, fa, pointers);
+            //printf ("\n%d %.2f %.2f %.2f %d\n",fa->burst,fa->turnaround,fa->wait,fa->norm_turnaround,fa->procs);
+
+        }  
+        else continue;
+    }
+}
+
+void runStatsSilentRR1(){
+    LIST_INIT(&rr1_f);
+    int bs_min = INT_MAX;
+    int bs_max = 0;
+    ProcessStats *pst;
+    //obtengo el burst minimo y el burst maximo
+    LIST_FOREACH(pst, &processes_stats, pointers) {
+        int bs=burst(pst->turnaround,pst->wait);
+        if (bs>bs_max){
+            bs_max=bs;
+        }
+        if (bs<bs_min){
+            bs_min=bs;
+        }
+    }
+    FileStats *fa;
+    //por cada valor de burst
+    for (int i = bs_min; i <= bs_max; i++)
+    {
+        fa = create_file_stats(0,i,0.0f,0.0f,0.0f);
+        ProcessStats *ps;
+        //busco en toda la lista de procesos
+        LIST_FOREACH(ps, &processes_stats, pointers) {
+            int bs=burst(ps->turnaround,ps->wait);
+            if(bs==i){
+                //acumulo en wait y turnaround
+                fa->wait=fa->wait+(float)ps->wait;
+                fa->turnaround=fa->turnaround+(float)ps->turnaround;
+                fa->norm_turnaround=(float)ps->turnaround/(float)bs;
+                fa->procs=fa->procs+1;
+            }else continue;
+        }
+        if(fa->procs>0){
+            //la acumulaci{on la cambio antes de insertar}
+            fa->wait=fa->wait/(float)fa->procs;
+            fa->turnaround=fa->turnaround/(float)fa->procs;
+            LIST_INSERT_HEAD(&rr1_f, fa, pointers);
+            //printf ("\n%d %.2f %.2f %.2f %d\n",fa->burst,fa->turnaround,fa->wait,fa->norm_turnaround,fa->procs);
+
+        }  
+        else continue;
+    }
+}
+
+void runStatsSilentRR4(){
+    LIST_INIT(&rr4_f);
+    int bs_min = INT_MAX;
+    int bs_max = 0;
+    ProcessStats *pst;
+    //obtengo el burst minimo y el burst maximo
+    LIST_FOREACH(pst, &processes_stats, pointers) {
+        int bs=burst(pst->turnaround,pst->wait);
+        if (bs>bs_max){
+            bs_max=bs;
+        }
+        if (bs<bs_min){
+            bs_min=bs;
+        }
+    }
+    FileStats *fa;
+    //por cada valor de burst
+    for (int i = bs_min; i <= bs_max; i++)
+    {
+        fa = create_file_stats(0,i,0.0f,0.0f,0.0f);
+        ProcessStats *ps;
+        //busco en toda la lista de procesos
+        LIST_FOREACH(ps, &processes_stats, pointers) {
+            int bs=burst(ps->turnaround,ps->wait);
+            if(bs==i){
+                //acumulo en wait y turnaround
+                fa->wait=fa->wait+(float)ps->wait;
+                fa->turnaround=fa->turnaround+(float)ps->turnaround;
+                fa->norm_turnaround=(float)ps->turnaround/(float)bs;
+                fa->procs=fa->procs+1;
+            }else continue;
+        }
+        if(fa->procs>0){
+            //la acumulaci{on la cambio antes de insertar}
+            fa->wait=fa->wait/(float)fa->procs;
+            fa->turnaround=fa->turnaround/(float)fa->procs;
+            LIST_INSERT_HEAD(&rr4_f, fa, pointers);
+            //printf ("\n%d %.2f %.2f %.2f %d\n",fa->burst,fa->turnaround,fa->wait,fa->norm_turnaround,fa->procs);
+
+        }  
+        else continue;
+    }
+    
+}
+
+
+void listsToFiles(){
+    
+    int bs_min = INT_MAX;
+    int bs_max = 0;
+    FileStats *fs;
+    //obtengo el burst minimo y el burst maximo
+    LIST_FOREACH(fs, &fcfs_f, pointers) {
+        int bs=fs->burst;
+        if (bs>bs_max){
+            bs_max=bs;
+        }
+        if (bs<bs_min){
+            bs_min=bs;
+        }
+    }
+    //por cada valor de burst
+    for (int i = bs_min; i <= bs_max; i++)
+    {
+        int burst = i;
+        float turnar_f,turnar_s,turnar_r1,turnar_r4;
+        float wt_f,wt_s,wt_r1,wt_r4;
+        float nturnar_f,nturnar_s,nturnar_r1,nturnar_r4;
+        FileStats *fc,*fsj,*fr1,*fr4;
+        int index=0;
+        LIST_FOREACH(fc, &fcfs_f, pointers) {
+            if(fc->burst == burst){
+                turnar_f=fc->turnaround;
+                wt_f=fc->wait;
+                nturnar_f=fc->norm_turnaround;
+                index++;
+            }
+        }
+        LIST_FOREACH(fsj, &sjf_f, pointers) {
+            if(fsj->burst == burst){
+                turnar_s=fsj->turnaround;
+                wt_s=fsj->wait;
+                nturnar_s=fsj->norm_turnaround;
+                index++;
+            }         
+        }
+        LIST_FOREACH(fr1, &rr1_f, pointers) {
+            if(fr1->burst == burst){
+                turnar_r1=fr1->turnaround;
+                wt_r1=fr1->wait;
+                nturnar_r1=fr1->norm_turnaround;
+                index++;
+            }             
+        }
+        LIST_FOREACH(fr4, &rr4_f, pointers) {
+            if(fr4->burst == burst){
+                turnar_r4=fr4->turnaround;
+                wt_r4=fr4->wait;
+                nturnar_r4=fr4->norm_turnaround;
+                index++;
+            }           
+        }
+        if(index==4) printf ("\n%d %.2f %.2f %.2f %.2f\n",burst,turnar_f,turnar_s,turnar_r1,turnar_r4);
+
+    }
+        
+    }
+
+
 void freeStats(){
     ProcessStats *node;
     while (!LIST_EMPTY(&processes_stats)) {
@@ -389,10 +596,5 @@ void freeStats(){
         free(node);
     }
 }
-void printFileStatsFCFS(){
-    FileStats *fex;
-    LIST_FOREACH(fex, &fcfs_f, pointers) {
-        printf ("\n%d %.2f %.2f %.2f %d\n",fex->burst,fex->turnaround,fex->wait,fex->norm_turnaround,fex->procs);
-    }
-}
+
 

@@ -12,7 +12,6 @@ int main(int argc, char *argv[])
     }
     char * file_path = argv[1]; // defino ruta del archivo
     
-    LIST_INIT(&sjf_f);
     LIST_INIT(&rr1_f);
     LIST_INIT(&rr4_f);
     for (int i = 0; i < 4; i++)
@@ -22,15 +21,21 @@ int main(int argc, char *argv[])
             {
             case 0:
                 fcfs_silent();
+                freeStats();
                 break;
             case 1:
                 sjf_silent();
+                freeStats();
                 break;
             case 2:
                 rr_silent(1);
+                runStatsSilentRR1();
+                freeStats();
                 break;
             case 3: 
                 rr_silent(4);
+                runStatsSilentRR4();
+                freeStats();
                 break;
             default:
                 break;
@@ -42,6 +47,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
     }
+    listsToFiles();
     return 0;
 }
 

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <math.h>
+#include <limits.h>
 #include "libs/queue.h"
 
 //structs
@@ -69,6 +70,13 @@ bool fillProcessQueues(char * file_path);
 //ESTADÍSTICAS
 void runStatsSilentFCFS();
 void printFileStatsFCFS();
+void runStatsSilentSJF();
+void printFileStatsSJF();
+void runStatsSilentRR1();
+void printFileStatsRR1();
+void runStatsSilentRR4();
+void printFileStatsRR4();
+void listsToFiles();
 void runStats(int end);
 void freeStats();
 //SCHEDULERS
