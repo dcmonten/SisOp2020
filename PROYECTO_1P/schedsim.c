@@ -1,8 +1,6 @@
 #include <stdio.h>
-#include<string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
+#include<string.h>
 #include <stdbool.h>
 #include <ctype.h>
 #include <math.h>
@@ -47,13 +45,13 @@ void freeStats();
 int sjfNextStop(Process * tmp, int arrival);
 Process * shortestJob(Process * ready,int arrival);
 void rr(long quantum);
-//3. Planificador SJF
+//Planificador SJF
 void sjf();
-//4. Planificador FCFS
+//Planificador FCFS
 void fcfs();
-//5. Busca el índice del scheduler usando el argumento 1
+//Busca el índice del scheduler usando el argumento 1
 int indexSched(char* sched);
-//6. llena las listas de arrival y burst con el archivo, retorna true si lo hizo satisfactoriamente,
+//llena las listas de arrival y burst con el archivo, retorna true si lo hizo satisfactoriamente,
 //false cuando la ruta del archivo es incorrecta.
 bool fillProcessQueues(char * file_path);
 
