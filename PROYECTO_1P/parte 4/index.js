@@ -1,4 +1,7 @@
-
+$( ".result" ).load( "schedturns.dat", function( data ) {
+  
+  alert( "Load was performed." );
+});
 
 
       
