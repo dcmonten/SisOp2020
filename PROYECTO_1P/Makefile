@@ -1,11 +1,11 @@
 schedsim:
-	gcc -I ./libs schedsim.c -o schedsim 
+	gcc -std=c11 -I ./libs schedsim.c -o schedsim 
 
 schedgen:  
-	gcc -o schedgen schedgen.c
+	gcc -std=c11 -o schedgen schedgen.c
 
-schedlib:
-	gcc -shared -o libsched.so -I ./libs -fPIC sched.c
+schedstats:
+	gcc -std=c11 -I ./libs schedstats.c -o schedstats 
 clean:
 	rm -f schedsim
 	rm -f schedgen
