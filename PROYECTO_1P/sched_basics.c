@@ -59,6 +59,7 @@ void rr(long quantum){
         int time_init = 0;
         Process *curr;
         int start,end,burst,turnaround,wait;
+        //ejecuto los procesos en orden de llegada, ls doy tiempo de cpu equivalente al quatum definido
         LIST_FOREACH(curr, &processes, pointers) {
             if(curr->arrival<=time_now)
             {
@@ -91,7 +92,7 @@ void rr(long quantum){
 }
 //ROUND ROBIN SILENT
 void rr_silent(long quantum){
-
+    //lo mismo que el anterior solo que este no imprime en consola
     printf("\n[INFO] Processing Round Robin Scheduler\n");
     printf("\n[INFO] Quantum: %ld\n",quantum);
     int time_now=0;
@@ -117,9 +118,7 @@ void rr_silent(long quantum){
         }
     }
 }
-
-
-
+//Reduce el burst actual del proceso, para poder descartarlo cuando legue a 0
 int executeProcess(Process * ready, int cputime,int arrival_time){
     int rem=remainingTime(cputime,ready->burst);
     int time=0;
@@ -135,7 +134,7 @@ int executeProcess(Process * ready, int cputime,int arrival_time){
     }
     return time;
 }
-
+//Descarta los procesos cuyo burst restante es 0 
 bool removeExecutedProcess(Process * executed){
     if(executed->burst == 0){
         int tat=turnaroundTime(executed->exec_end,executed->arrival);
@@ -147,7 +146,7 @@ bool removeExecutedProcess(Process * executed){
     }
     else return false;
 }
-/*SJF*/
+/*SJF sin salida de consola*/
 void sjf_silent(){
     printf("\n[INFO] Processing Shortest Job First Scheduler Scheduler\n");
     int time_now=0;
@@ -172,7 +171,7 @@ void sjf_silent(){
     }
     runStatsSilentSJF();
 }
-/*SJF*/
+/*SJF itera cada item en busca del que tiene el menor tiempo restante y lo ejecuta, siempre empieza desde el primer item*/
 void sjf(){
     printf("\n[INFO] SCHEDULER: Shortest Job First Scheduler Scheduler\n");
     int time_now=0;
@@ -183,7 +182,7 @@ void sjf(){
         int start,end,burst,turnaround,wait;
         start = time_now;
         curr = shortestJob(curr,start); 
-        int step=sjfNextStop(curr, start);
+        int step=sjfNextStop(curr, start);//el next stop le dice al sjf cuanto debe durar el burst
         int expected_brst=(step<curr->burst)?step:curr->burst;
         if (curr->arrival<=time_now){
             int adt=executeProcess(curr,expected_brst,time_now);
@@ -216,6 +215,7 @@ int sjfNextStop(Process * ready,int arrival){
     }
     return (next_arrival<ready->burst) ? next_arrival:ready->burst;
 }
+//REtorna el proceso con menor duración de toda la lista de proceso sque ya hayan llegado.
 Process * shortestJob(Process * ready,int arrival){
     Process * ready_on_q;
     Process * tmp = ready;
@@ -233,7 +233,7 @@ Process * shortestJob(Process * ready,int arrival){
 }
 
 
-
+//Ejecuta el primer proceso que llega, por completo.
 void fcfs(){   
     printf("\n[INFO] SCHEDULER: First Come First Serve Scheduler\n");
     int time_now=0;
@@ -269,6 +269,7 @@ void fcfs(){
     }
     runStats(time_now);
 }
+//Lo mismo que el anterios, pero no imprime la salida de la pantallla
 void fcfs_silent(){   
     printf("\n[INFO] Processing First Come First Serve Scheduler\n");
     int time_now=0;
@@ -325,6 +326,7 @@ bool fillProcessQueues(char * file_path){
 
 /***Stats*****/
 
+//Revisa la lista de estadísticas e imprime las estadñisticas globales de la ejecución
 void runStats(int end){
     ProcessStats *ps;
     int turnaround_sum=0;
@@ -348,6 +350,7 @@ void runStats(int end){
     printf("\nAverage Wait Time: %.2f time units\n",avg_wt);
     freeStats();
 }
+//Revisa la lista de estadísticas y guarda las estadisticas ordenadas por burst en la lista de stats de fcfs
 
 void runStatsSilentFCFS(){
     LIST_INIT(&fcfs_f);
@@ -390,6 +393,7 @@ void runStatsSilentFCFS(){
         else continue;
     }
 }
+//Revisa la lista de estadísticas y guarda las estadisticas ordenadas por burst en la lista de stats de sjf
 
 void runStatsSilentSJF(){
     LIST_INIT(&sjf_f);
@@ -434,6 +438,7 @@ void runStatsSilentSJF(){
         else continue;
     }
 }
+//Revisa la lista de estadísticas y guarda las estadisticas ordenadas por burst en la lista de stats de rr con q=1
 
 void runStatsSilentRR1(){
     LIST_INIT(&rr1_f);
@@ -478,6 +483,7 @@ void runStatsSilentRR1(){
         else continue;
     }
 }
+//Revisa la lista de estadísticas y guarda las estadisticas ordenadas por burst en la lista de stats de rr con q=4
 
 void runStatsSilentRR4(){
     LIST_INIT(&rr4_f);
@@ -524,6 +530,7 @@ void runStatsSilentRR4(){
     
 }
 
+//Revisa la lista de estadísticas por tipo de planificador y la guarda en archivos
 
 void listsToFiles(){
     FILE *schedtur;
@@ -602,7 +609,7 @@ void listsToFiles(){
      fclose (schedw);   
     }
 
-
+//libera la memoria de la lista de estadísticas de procesos.
 void freeStats(){
     ProcessStats *node;
     while (!LIST_EMPTY(&processes_stats)) {

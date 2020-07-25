@@ -19,20 +19,40 @@
             <label for="file-selector">Añada los archivos .dat aqui</label>
             <input type="file" id="file-selector" accept=".dat" multiple>
         </div>
+        <div id="file">
+
+        </div>
         <div id="chart">
         </div>
     </div>
     <script>
         const fileSelector = document.getElementById('file-selector');
+        const data_arr = [];
         fileSelector.addEventListener('change', (event) => {
           const fileList = event.target.files;
-          let reader = new FileReader();
-          fileList.forEach((file)=>{
-            console.log(reader.readAsText(file));
+          console.log(fileList);
+          for (var file of fileList){
+            const img = document.createElement("p");
+            img.classList.add("col-12");
+            img.file = file;
+            document.getElementById('file').appendChild(img); 
+            const reader = new FileReader();
+            reader.onload = (function(aImg) { return function(e) { aImg.html = e.target.result; }; })(img);
+            reader.readAsText(file);
+            switch(file.name){
+                case "schedturns.dat":
+                  data_arr.push({"schedturns.dat":file});
+                  break;
+                case "schednturns.dat":
+                  data_arr.push({"schednturns.dat":file});
+                  break;
+                case "schedwaits.dat":
+                  data_arr.push({"schedwaits.dat":file});
+                  break;
+            }
           }
-          );
-          
-          
+          console.log(data_arr);
+                
         });
       </script>
     <script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
